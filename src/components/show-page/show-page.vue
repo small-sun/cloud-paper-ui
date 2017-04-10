@@ -1,8 +1,5 @@
 <template>
-  <div class="homePage">
-    <h1>我是homePage</h1>
-    <router-link to="/showPage">前往展示界面</router-link>
-  </div>
+  <div class="show-page">我是展示页面</div>
 </template>
 <script type="text/ecmascript-6">
   export default {
