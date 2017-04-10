@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import homePage from '@/components/homePage/homePage'
-import showPage from '@/components/showPage/showPage'
+import homePage from '@/components/home-page/home-page'
+import showPage from '@/components/show-page/show-page'
 
 Vue.use(Router)
 
@@ -12,11 +12,11 @@ export default new Router({
       component: homePage
     },
     {
-      path: '/homePage',
+      path: '/home-page',
       component: homePage
     },
     {
-      path: '/showPage',
+      path: '/show-page',
       component: showPage
     }
   ]

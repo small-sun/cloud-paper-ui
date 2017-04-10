@@ -1,5 +1,5 @@
 <template>
-  <div class="showPage">我是展示页面</div>
+  <div class="show-page">我是展示页面</div>
 </template>
 <script type="text/ecmascript-6">
   export default {
