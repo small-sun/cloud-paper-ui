@@ -6,7 +6,9 @@
         <span class="name">房间令牌</span>
         <input type="text" class="key">
       </label>
-      <button type="button" class="submit">加入房间</button>
+      <button type="button" class="submit">
+        <router-link to="/show-page">加入房间</router-link>
+      </button>
     </section>
     <section class="sub-container">
       <v-aside></v-aside>
@@ -16,7 +18,7 @@
 <script type="text/ecmascript-6">
   import aside from '@/components/aside/aside'
   export default {
-    name: '',
+    name: 'home-page',
     data () {
       return {}
     },
@@ -64,6 +66,8 @@
       font-size: 26px
       text-align: center
       font-weight bold
+    a
+      color: #fff
   /* 首页样式 */
   .home-page
     overflow: hidden
