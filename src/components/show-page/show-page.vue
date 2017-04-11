@@ -8,7 +8,9 @@
           </span>
           <span class="header__warp--living">房间正在直播中...</span>
           <span class="header__warp--stopping">当前房间尚未直播...</span>
-          <span class="header__warp--sharing toggle"><img src="./sharing.png"></span>
+          <span class="header__warp--sharing" :class="{toggle:shareHide}" @click="shareHide=!shareHide">
+            <img src="./sharing.png">
+          </span>
           <div class="header__warp--dropdown">
             <div class="dropdown--cover">
               <div class="dropdown--container">
@@ -37,13 +39,33 @@
   export default {
     name: 'show-page',
     data () {
-      return {}
+      return {
+        shareHide: true
+      }
+    },
+    methods: {
     }
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
   .show-page
   // 房间页样式文件
+    button, input
+      border: none
+      outline: none
+      background: none
+      font-family: 'Open Sans', Helvetica, Arial, sans-serif
+    button
+      display: block
+      margin: 0 auto
+      width: 30vw
+      height: 36px
+      border-radius: 30px
+      color: #fff
+      font-size: 15px
+      font-weight bold
+      cursor: pointer
+      padding 0
     a
       color: #fff
     #room
@@ -159,10 +181,13 @@
           background: rgba(204, 204, 204, .5)
           color: white
           box-shadow: 0 0 5px #ccc
+          box-sizing border-box
+          font-weight bold
         .dropdown--copy
           box-shadow: 0 0 5px white
           background: #d4af7a
           width: 50%
+          box-sizing border-box
 
       // canvas区域
       .paint
