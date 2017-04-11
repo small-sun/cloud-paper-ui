@@ -1,13 +1,13 @@
 <template>
   <div class="home-page">
     <section class="form sign-in">
-      <h2 class="title">请输入房间令牌以加入演示</h2>
+      <h2 class="title" @click="test">请输入房间令牌以加入演示</h2>
       <label>
         <span class="name">房间令牌</span>
         <input type="text" class="key">
       </label>
       <button type="button" class="submit">
-        <router-link to="/show-page">加入房间</router-link>
+        <router-link to="/show-page" class="getIn">加入房间</router-link>
       </button>
     </section>
     <section class="sub-container">
@@ -17,6 +17,10 @@
 </template>
 <script type="text/ecmascript-6">
   import aside from '@/components/aside/aside'
+  import VueSocketIo from 'vue-socket.io'
+  import Vue from 'vue'
+  // Vue.use(VueSocketIo, 'http://10.19.220.110:4000');
+  // Vue.use(VueSocketIo, 'localhost:8080')
   export default {
     name: 'home-page',
     data () {
@@ -24,6 +28,20 @@
     },
     components: {
       'v-aside': aside
+    },
+    sockets: {
+      connect () {
+        console.log('success')
+      },
+      message () {
+        console.log('收到返回数据')
+      }
+    },
+    methods: {
+      test () {
+        console.log('发送请求')
+        this.$socket.emit('message', 'hello nodejs');
+      }
     }
   }
 </script>
@@ -68,6 +86,7 @@
       font-weight bold
     a
       color: #fff
+
   /* 首页样式 */
   .home-page
     overflow: hidden
@@ -99,6 +118,13 @@
       margin-top: 40px
       margin-bottom: 20px
       background: #d4af7a
+      padding 0
+      .getIn
+        display inline-block
+        width 100%
+        height 100%
+        line-height 36px
+
   .sub-container
     overflow: hidden
     position: absolute

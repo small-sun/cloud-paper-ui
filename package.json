@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "axios": "^0.16.1",
+    "clipboard": "^1.6.1",
     "vue": "^2.2.2",
     "vue-router": "^2.3.0"
   },
@@ -54,6 +55,7 @@
     "stylus-loader": "^2.4.0",
     "url-loader": "^0.5.7",
     "vue-loader": "^11.1.4",
+    "vue-socket.io": "^2.1.1-a",
     "vue-style-loader": "^2.0.0",
     "vue-template-compiler": "^2.2.4",
     "webpack": "^2.2.1",
