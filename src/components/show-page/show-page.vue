@@ -1,5 +1,5 @@
 <template>
-  <div class="show-page">
+  <div class="show-page" @click="shareHide($event)">
     <main class="container" id="room">
       <header class="header">
         <div class="header__warp">
@@ -8,21 +8,33 @@
           </span>
           <span class="header__warp--living">房间正在直播中...</span>
           <span class="header__warp--stopping">当前房间尚未直播...</span>
-          <span class="header__warp--sharing toggle"><img src="./sharing.png"></span>
-          <div class="header__warp--dropdown">
-            <div class="dropdown--cover">
-              <div class="dropdown--container">
-                <p class="dropdown--inviate">快邀请小伙伴加入房间吧！</p>
-                <p class="dropdown--token">XHDJFKHYEDKSDHF</p>
-                <button class="dropdown--copy" type="button">点击复制令牌号</button>
+          <span class="header__warp--sharing" @click.stop="toggleShare">
+            <img src="./sharing.png">
+          </span>
+          <transition name="share-show">
+            <div class="header__warp--dropdown" v-show="shareShow">
+              <div class="dropdown--cover">
+                <div class="dropdown--container">
+                  <p class="dropdown--inviate">快邀请小伙伴加入房间吧！</p>
+                  <p class="dropdown--token">
+                    <input type="text" value="XHDJFKHYEDKSDHF" id="key">
+                  </p>
+                  <button class="dropdown--copy" type="button" id="copy" data-clipboard-target="#key">{{tips}}</button>
+                </div>
               </div>
             </div>
-
-          </div>
+          </transition>
         </div>
       </header>
       <section class="paint">
-        <canvas id=""></canvas>
+        <div class="paint-board">
+          <section>
+            <div id="write" class="write">
+            </div>
+            <div id="read" class="read">
+            </div>
+          </section>
+        </div>
         <aside class="paint__tool">
           <ul>
             <li><img src="./pencil.png"></li>
@@ -34,17 +46,88 @@
   </div>
 </template>
 <script type="text/ecmascript-6">
+  import Clipboard from 'clipboard'
+  import { Position } from '@/common/js/libs'
+  import PaperWritter from '@/common/js/paper_writter'
+  import PaperReader from '@/common/js/paper_reader'
   export default {
     name: 'show-page',
     data () {
-      return {}
+      return {
+        shareShow: false,
+        tips: '点击复制令牌号',
+        message: []
+      }
+    },
+    mounted () {
+      this.$nextTick(() => {
+        this.copyBoard();
+        let writter = new PaperWritter({
+          'el': document.getElementById('write'),
+          'height': 500,
+          'width': 600,
+          'url': 'server',
+          'message': this.message
+        });
+        let reader = new PaperReader({
+          'el': document.getElementById('read'),
+          'height': 500,
+          'width': 300,
+          'url': 'server',
+          'message': this.message
+        });
+      })
+    },
+    methods: {
+      // 分享按钮打开与关闭
+      toggleShare () {
+        this.shareShow = !this.shareShow;
+        setTimeout(() => {
+          this.tips = '点击复制令牌号';
+        }, 500)
+      },
+      // 分享界面关闭，监听空白区域
+      shareHide (event) {
+        if (!this.shareShow) {
+          return
+        }
+        if (event.target.className === 'container' || event.target.className === 'paint') {
+          this.shareShow = false;
+          setTimeout(() => {
+            this.tips = '点击复制令牌号';
+          }, 500)
+        }
+      },
+      // 挂载复制粘贴
+      copyBoard () {
+        let copy = new Clipboard('#copy');
+        copy.on('success', () => {
+          this.tips = '复制成功，快去分享吧'
+        })
+      }
     }
   }
 </script>
 <style lang="stylus" rel="stylesheet/stylus" scoped>
   .show-page
   // 房间页样式文件
-    a
+    button, input
+      border: none
+      outline: none
+      background: none
+      font-family: 'Open Sans', Helvetica, Arial, sans-serif
+    button
+      display: block
+      margin: 0 auto
+      width: 30vw
+      height: 36px
+      border-radius: 30px
+      color: #fff
+      font-size: 15px
+      font-weight bold
+      cursor: pointer
+      padding 0
+    a, input
       color: #fff
     #room
       &.container
@@ -118,7 +201,7 @@
             left: 50%
             transform: translate3d(-55%, -55%, 0)
       div
-        &.header__warp--dropdown
+        .header__warp--dropdown
           transition: all .2s ease-in
           position: absolute
           z-index: 2
@@ -127,6 +210,22 @@
           right: 15px
           height: 200px
           width: 400px
+          transform-origin 400px 0
+          animation show .5s /**
+          说明：
+            未知原因，入场动画使用vue渲染会卡顿
+          解决办法：
+            入场动画使用animation
+           */
+          @keyframes show
+            0%
+              transform scale(0)
+            100%
+              transform scale(1)
+          &.share-show-leave-active
+            transition transform .5s ease-in-out
+          &.share-show-leave-active
+            transform scale(0)
           .dropdown--cover
             width: 100%
             height: 100%
@@ -139,9 +238,6 @@
             content: ''
             border: 15px solid rgba(231, 210, 180, 0.5)
             border-color: transparent transparent rgba(231, 210, 180, 0.5) transparent
-      .header__warp--sharing.toggle + .header__warp--dropdown
-        display: none
-        box-sizing border-box
       .dropdown--container
         text-align: center
         position: absolute
@@ -159,16 +255,16 @@
           background: rgba(204, 204, 204, .5)
           color: white
           box-shadow: 0 0 5px #ccc
+          box-sizing border-box
+          font-weight bold
         .dropdown--copy
           box-shadow: 0 0 5px white
           background: #d4af7a
           width: 50%
-
-      // canvas区域
+          box-sizing border-box
       .paint
         overflow: hidden
         width: 1024px
-        // background: rgba(204,204,204,.5)
         height: 100%
         position: absolute
         top: 70px
@@ -177,6 +273,13 @@
         transform: translate3d(-50%, 0, 0)
         z-index: 1
         box-shadow: 0 0 10px rgba(204, 204, 204, 0.5)
+        .paint-board
+          .read, .write
+            display inline-block
+            vertical-align top
+          .read
+            canvas
+              margin-top 27px
         .paint__tool
           width: 50px
           background: white
