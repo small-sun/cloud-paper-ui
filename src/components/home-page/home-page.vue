@@ -1,13 +1,13 @@
 <template>
   <div class="home-page">
     <section class="form sign-in">
-      <h2 class="title" @click="test">请输入房间令牌以加入演示</h2>
+      <h2 class="title">请输入房间令牌以加入演示</h2>
       <label>
         <span class="name">房间令牌</span>
-        <input type="text" class="key">
+        <input type="text" class="key" v-model="inputToken">
       </label>
-      <button type="button" class="submit">
-        <router-link to="/show-page" class="getIn">加入房间</router-link>
+      <button type="button" class="submit" @click.prevent="join">
+        <router-link :to="url" class="getIn">加入房间</router-link>
       </button>
     </section>
     <section class="sub-container">
@@ -17,30 +17,46 @@
 </template>
 <script type="text/ecmascript-6">
   import aside from '@/components/aside/aside'
-  import VueSocketIo from 'vue-socket.io'
-  import Vue from 'vue'
-  // Vue.use(VueSocketIo, 'http://10.19.220.110:4000');
-  // Vue.use(VueSocketIo, 'localhost:8080')
+  import axios from 'axios'
+  import { mapState } from 'vuex'
+  import * as type from '@/store/mutation-types'
   export default {
     name: 'home-page',
     data () {
-      return {}
+      return {
+        inputToken: '',
+        url: ''
+      }
     },
     components: {
       'v-aside': aside
     },
-    sockets: {
-      connect () {
-        console.log('success')
-      },
-      message () {
-        console.log('收到返回数据')
-      }
+    computed: {
+      ...mapState({
+        id: (state) => state.id,
+        token: (status) => state.token
+      })
     },
     methods: {
-      test () {
-        console.log('发送请求')
-        this.$socket.emit('message', 'hello nodejs');
+      join () {
+        this.changeId('host');
+//        let url = 'http://localhost:4000/websocket/connect/' + this.inputToken;
+        let url = 'http://10.19.220.110:4000/websocket/connect/' + this.inputToken;
+        axios.get(url).then((res, req) => {
+          res = res.data;
+          if (res.state === 'success') {
+            this.url = '/show-page';
+            this.changeToken(res.token)
+          } else {
+            console.log('密码不对');
+          }
+        })
+      },
+      changeId (newValue) {
+        this.$store.commit(type.CHANGE_ID, newValue);
+      },
+      changeToken (newValue) {
+        this.$store.commit(type.CHANGE_TOKEN, newValue);
       }
     }
   }
