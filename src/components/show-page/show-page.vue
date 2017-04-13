@@ -17,7 +17,7 @@
                 <div class="dropdown--container">
                   <p class="dropdown--inviate">快邀请小伙伴加入房间吧！</p>
                   <p class="dropdown--token">
-                    <input type="text" value="XHDJFKHYEDKSDHF" id="key">
+                    <input type="text" :value="token" id="key">
                   </p>
                   <button class="dropdown--copy" type="button" id="copy" data-clipboard-target="#key">{{tips}}</button>
                 </div>
@@ -50,32 +50,33 @@
   import { Position } from '@/common/js/libs'
   import PaperWritter from '@/common/js/paper_writter'
   import PaperReader from '@/common/js/paper_reader'
+  import { mapState } from 'vuex'
   export default {
     name: 'show-page',
     data () {
       return {
         shareShow: false,
         tips: '点击复制令牌号',
-        message: []
+        sendMessage: [],
+        getMessage: []
       }
     },
     mounted () {
       this.$nextTick(() => {
         this.copyBoard();
-        let writter = new PaperWritter({
-          'el': document.getElementById('write'),
-          'height': 500,
-          'width': 600,
-          'url': 'server',
-          'message': this.message
-        });
-        let reader = new PaperReader({
-          'el': document.getElementById('read'),
-          'height': 500,
-          'width': 300,
-          'url': 'server',
-          'message': this.message
-        });
+        // 等待vuex数据更新
+        let time = setInterval(() => {
+          if (this.id !== '') {
+            clearInterval(time);
+            this.justify();
+          }
+        }, 200)
+      })
+    },
+    computed: {
+      ...mapState({
+        id: (state) => state.id,
+        token: (state) => state.token
       })
     },
     methods: {
@@ -84,7 +85,7 @@
         this.shareShow = !this.shareShow;
         setTimeout(() => {
           this.tips = '点击复制令牌号';
-        }, 500)
+        }, 500);
       },
       // 分享界面关闭，监听空白区域
       shareHide (event) {
@@ -104,6 +105,38 @@
         copy.on('success', () => {
           this.tips = '复制成功，快去分享吧'
         })
+      },
+      // 判断房主还是宾客
+      justify () {
+        let url = 'http://10.19.220.110:4000/' + this.token;
+        let socket = io.connect(url);
+        if (this.id === 'owner') {
+//          let url = 'http://localhost:4000/' + this.token;
+          setInterval(() => {
+            socket.emit('message', JSON.stringify(this.sendMessage));
+          }, 1000);
+          let writter = new PaperWritter({
+            'el': document.getElementById('write'),
+            'height': 500,
+            'width': 600,
+            'url': 'server',
+            'message': this.sendMessage
+          });
+        } else if (this.id === 'host') {
+//          let url = 'http://localhost:4000/' + this.token;
+          let that = this;
+          let reader = new PaperReader({
+            'el': document.getElementById('read'),
+            'height': 500,
+            'width': 300,
+            'url': 'server',
+            'message': this.getMessage
+          });
+          socket.on('message', function (data) {
+            that.getMessage = JSON.parse(data);
+            reader.message = that.getMessage;
+          })
+        }
       }
     }
   }

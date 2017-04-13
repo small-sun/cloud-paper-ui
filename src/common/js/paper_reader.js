@@ -23,7 +23,7 @@ export default class PaperReader {
           last = current;
         }
       }
-    }, 500);
+    }, 1000);
   }
 };
 

@@ -10,17 +10,46 @@
         <p>快来加入小伙伴的房间吧!</p>
       </div>
       <div class="aside__btn">
-        <span class="aside--signup">创建房间</span>
+        <span class="aside--signup" @click="create">
+          <router-link to="/show-page">创建房间</router-link>
+        </span>
         <span class="aside--signin">加入房间</span>
       </div>
     </aside>
   </div>
 </template>
 <script type="text/ecmascript-6">
+  import axios from 'axios'
+  import * as type from '@/store/mutation-types'
   export default {
-    name: '',
+    name: 'aside',
     data () {
       return {}
+    },
+    methods: {
+      create () {
+        this.changeId('owner');
+//        let url = 'http://localhost:4000/token/create'
+        let url = 'http://10.19.220.110:4000/token/create'
+        axios.get(url)
+          .then((res, req) => {
+            this.changeToken(res.data);
+          })
+      },
+      changeId (newValue) {
+        this.$store.commit(type.CHANGE_ID, newValue);
+      },
+      changeToken (newValue) {
+        this.$store.commit(type.CHANGE_TOKEN, newValue);
+      }
+    },
+    sockets: {
+      connect () {
+        console.log('success')
+      },
+      message () {
+        console.log('收到返回数据')
+      }
     }
   }
 </script>
@@ -36,6 +65,7 @@
     height: 100%
     padding-top: 360px
     box-sizing border-box
+
   .aside:before
     content: ''
     position: absolute
@@ -43,12 +73,13 @@
     top: 0
     width: 100vw
     height: 100%
-    background-image: url("http://7xss68.com1.z0.glb.clouddn.com/pexels-photo.jpg")
+    background-image: url("./bg.jpg")
     background-size: cover
     -webkit-transition: -webkit-transform 1.2s ease-in-out
     transition: -webkit-transform 1.2s ease-in-out
     transition: transform 1.2s ease-in-out
     transition: transform 1.2s ease-in-out, -webkit-transform 1.2s ease-in-out
+
   .aside:after
     content: ''
     position: absolute
@@ -57,6 +88,7 @@
     width: 100%
     height: 100%
     background: rgba(0, 0, 0, 0.6)
+
   .home-page.switch--signup .aside:before
     -webkit-transform: translate3d(70vw, 0, 0)
     transform: translate3d(70vw, 0, 0)
@@ -75,6 +107,7 @@
     transition: transform 1.2s ease-in-out
     transition: transform 1.2s ease-in-out, -webkit-transform 1.2s ease-in-out
     box-sizing border-box
+
   .aside__text h2
     font-size: 2em
     margin-bottom: 10px
@@ -112,7 +145,7 @@
   /* 为按钮加上border样式 */
   .aside__btn:after
     content: ''
-    z-index: 2
+    z-index: -1
     position: absolute
     left: 0
     top: 0
@@ -121,6 +154,7 @@
     border: 2px solid #fff
     border-radius: 30px
     box-sizing border-box
+
   .aside__btn span
     position: absolute
     left: 0
@@ -141,6 +175,14 @@
     transition: transform 1.2s
     transition: transform 1.2s, -webkit-transform 1.2s
     font-weight bold
+    a
+      display inline-block
+      width 100%
+      height 100%
+      text-align center
+      line-height 36px
+      color #fff
+
   .aside__btn span.aside--signin
     -webkit-transform: translateY(-72px)
     transform: translateY(-72px)
