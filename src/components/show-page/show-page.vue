@@ -3,21 +3,21 @@
     <main class="container" id="room">
       <header class="header">
         <div class="header__warp">
-          <span>
+          <span @click="back">
             <router-link to="/home-page">☁️云纸条</router-link>
           </span>
-          <span class="header__warp--living">房间正在直播中...</span>
-          <span class="header__warp--stopping">当前房间尚未直播...</span>
-          <span class="header__warp--sharing" @click.stop="toggleShare">
+          <span class="header__warp--living" v-if="true">房间正在直播中</span>
+          <span class="header__warp--stopping" v-if="false">当前房间尚未直播...</span>
+          <span class="header__warp--sharing" @click.stop="toggleShare" v-show="this.id==='owner'">
             <img src="./sharing.png">
           </span>
           <transition name="share-show">
-            <div class="header__warp--dropdown" v-show="shareShow">
+            <div class="header__warp--dropdown" v-if="shareShow">
               <div class="dropdown--cover">
                 <div class="dropdown--container">
                   <p class="dropdown--inviate">快邀请小伙伴加入房间吧！</p>
                   <p class="dropdown--token">
-                    <input type="text" value="XHDJFKHYEDKSDHF" id="key">
+                    <input type="text" :value="token" id="key">
                   </p>
                   <button class="dropdown--copy" type="button" id="copy" data-clipboard-target="#key">{{tips}}</button>
                 </div>
@@ -26,19 +26,19 @@
           </transition>
         </div>
       </header>
-      <section class="paint">
+      <section class="paint" id="paint">
         <div class="paint-board">
           <section>
-            <div id="write" class="write">
+            <div id="write" class="write" v-if="this.id==='owner'">
             </div>
-            <div id="read" class="read">
+            <div id="read" class="read" v-if="this.id==='host'">
             </div>
           </section>
         </div>
-        <aside class="paint__tool">
+        <aside class="paint__tool" v-if="this.id==='owner'">
           <ul>
             <li><img src="./pencil.png"></li>
-            <li><img src="./eraser.png" alt=""></li>
+            <li><img src="./eraser.png"></li>
           </ul>
         </aside>
       </section>
@@ -50,48 +50,74 @@
   import { Position } from '@/common/js/libs'
   import PaperWritter from '@/common/js/paper_writter'
   import PaperReader from '@/common/js/paper_reader'
+  import { mapState } from 'vuex'
+  import axios from 'axios'
   export default {
     name: 'show-page',
     data () {
       return {
         shareShow: false,
         tips: '点击复制令牌号',
-        message: []
+        sendMessage: [],
+        getMessage: [],
+        socket: '',
+        reader: ''
       }
     },
     mounted () {
       this.$nextTick(() => {
         this.copyBoard();
-        let writter = new PaperWritter({
-          'el': document.getElementById('write'),
-          'height': 500,
-          'width': 600,
-          'url': 'server',
-          'message': this.message
-        });
-        let reader = new PaperReader({
-          'el': document.getElementById('read'),
-          'height': 500,
-          'width': 300,
-          'url': 'server',
-          'message': this.message
-        });
+        // 等待vuex数据更新
+        let time = setInterval(() => {
+          if (this.id !== '') {
+            clearInterval(time);
+            this.justify();
+          }
+        }, 200)
+      })
+    },
+    watch: {
+      // owner的画板数据改变实时传输
+      sendMessage (newValue) {
+        this.socket.emit('message', JSON.stringify(newValue));
+      },
+      // host的画板数据实时接收
+      getMessage (newValue) {
+        this.reader.message = newValue;
+        this.reader.draw();
+      }
+    },
+    computed: {
+      ...mapState({
+        id: (state) => state.id,
+        token: (state) => state.token
       })
     },
     methods: {
+      // 返回主页销毁房间
+      back () {
+        if (confirm('确定退出房间？')) {
+          let url = 'http://10.19.220.110:4000/token/destroy/' + this.token;
+          axios.get(url).then((res, req) => {
+            res = res.data;
+            console.log('房间已销毁');
+          })
+        }
+      },
       // 分享按钮打开与关闭
       toggleShare () {
         this.shareShow = !this.shareShow;
         setTimeout(() => {
           this.tips = '点击复制令牌号';
-        }, 500)
+        }, 500);
       },
       // 分享界面关闭，监听空白区域
       shareHide (event) {
         if (!this.shareShow) {
           return
         }
-        if (event.target.className === 'container' || event.target.className === 'paint') {
+        console.log(event.target.className)
+        if (event.target.className === 'container' || event.target.parentNode.className === 'write') {
           this.shareShow = false;
           setTimeout(() => {
             this.tips = '点击复制令牌号';
@@ -104,6 +130,35 @@
         copy.on('success', () => {
           this.tips = '复制成功，快去分享吧'
         })
+      },
+      // 判断房主还是宾客
+      justify () {
+        let url = 'http://10.19.220.110:4000/' + this.token;
+        let socket = io.connect(url);
+        this.socket = socket;
+        let height = document.getElementById('paint').offsetHeight - 27;
+        if (this.id === 'owner') {
+//          let url = 'http://localhost:4000/' + this.token;
+          let writter = new PaperWritter({
+            'el': document.getElementById('write'),
+            'height': 670,
+            'width': 1024,
+            'url': 'server',
+            'message': this.sendMessage
+          });
+        } else if (this.id === 'host') {
+          let that = this;
+          this.reader = new PaperReader({
+            'el': document.getElementById('read'),
+            'height': 670,
+            'width': 1024,
+            'url': 'server',
+            'message': this.getMessage
+          });
+          socket.on('message', function (data) {
+            that.getMessage = JSON.parse(data);
+          })
+        }
       }
     }
   }
@@ -133,9 +188,6 @@
       &.container
         overflow: hidden
         position: relative
-        width: 100vw
-        height: 100vh
-        margin: 0 auto
         background: #fff
       .header
         width: 100vw
@@ -154,7 +206,6 @@
           color: #FAF7F1
       span
         &.header__warp--living
-          display: none
           font-size: .8em
           &::before
             content: ''
@@ -257,20 +308,20 @@
           box-shadow: 0 0 5px #ccc
           box-sizing border-box
           font-weight bold
+          #key
+            width 100%
+            text-align center
         .dropdown--copy
           box-shadow: 0 0 5px white
           background: #d4af7a
           width: 50%
           box-sizing border-box
       .paint
-        overflow: hidden
         width: 1024px
-        height: 100%
-        position: absolute
-        top: 70px
-        left: 50%
+        height 100%
+        margin 0 auto
         display: block
-        transform: translate3d(-50%, 0, 0)
+        position relative
         z-index: 1
         box-shadow: 0 0 10px rgba(204, 204, 204, 0.5)
         .paint-board

@@ -1,7 +1,6 @@
 import { Position } from '@/common/js/libs'
 export default class PaperWritter {
   constructor (obj) {
-    console.log(obj)
     this.width = obj.width;
     this.height = obj.height;
     this.lineWidth = obj.lineWidth || 1.0;
