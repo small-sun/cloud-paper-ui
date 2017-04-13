@@ -42,9 +42,9 @@
         this.changeId('host');
 //        let url = 'http://localhost:4000/websocket/connect/' + this.inputToken;
         let url = 'http://10.19.220.110:4000/websocket/connect/' + this.inputToken;
-        axios.get(url).then((res, req) => {
+        axios.get(url, {withCredentials: true}).then((res, req) => {
           res = res.data;
-          if (res.state === 'success') {
+          if (res.errmsg === 'ok') {
             this.url = '/show-page';
             this.changeToken(res.token)
           } else {
