@@ -5,12 +5,12 @@
 </template>
 
 <script type="text/ecmascript-6">
-  import homePage from '@/components/home-page/home-page'
+  import indexPage from '@/components/index-page/index-page'
   import store from '@/store'
   export default {
     name: 'app',
     components: {
-      'home-page': homePage
+      'index-page': indexPage
     },
     store
   }

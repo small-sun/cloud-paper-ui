@@ -4,7 +4,7 @@
       <header class="header">
         <div class="header__warp">
           <span @click="back">
-            <router-link to="/home-page">☁️云纸条</router-link>
+            <router-link to="/index-page">☁️云纸条</router-link>
           </span>
           <span class="header__warp--living" v-if="true">房间正在直播中</span>
           <span class="header__warp--stopping" v-if="false">当前房间尚未直播...</span>
@@ -104,7 +104,7 @@
         eraserSize: 5
       }
     },
-    created () {
+    mounted () {
       this.$nextTick(() => {
         this.initCopyBoard();
         // 等待vuex数据更新

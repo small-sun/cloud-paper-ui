@@ -21,18 +21,6 @@ var autoOpenBrowser = !!config.dev.autoOpenBrowser
 var proxyTable = config.dev.proxyTable
 
 var app = express()
-var http = require('http').Server(app);
-// var io = require('socket.io')(http);
-// var msg;
-// io.sockets.on('connection', function (socket) {
-//   console.log('新连接建立');
-//   socket.on('message', function (data) {
-//     // socket.broadcast.emit('message', msg);
-//     io.emit('message', msg)
-//   })
-// })
-
-
 var compiler = webpack(webpackConfig)
 
 var devMiddleware = require('webpack-dev-middleware')(compiler, {
@@ -91,7 +79,7 @@ devMiddleware.waitUntilValid(() => {
   _resolve()
 })
 
-http.listen(port)
+app.listen(port)
 
 module.exports = {
   ready: readyPromise,
