@@ -22,15 +22,15 @@ var proxyTable = config.dev.proxyTable
 
 var app = express()
 var http = require('http').Server(app);
-// var io = require('socket.io')(http);
-// var msg;
-// io.sockets.on('connection', function (socket) {
-//   console.log('新连接建立');
-//   socket.on('message', function (data) {
-//     // socket.broadcast.emit('message', msg);
-//     io.emit('message', msg)
-//   })
-// })
+var io = require('socket.io')(http);
+var msg;
+io.sockets.on('connection', function (socket) {
+  console.log('新连接建立');
+  socket.on('message', function (data) {
+    // socket.broadcast.emit('message', msg);
+    io.emit('message', msg)
+  })
+})
 
 
 var compiler = webpack(webpackConfig)
