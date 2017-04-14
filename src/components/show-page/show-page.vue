@@ -4,7 +4,7 @@
       <header class="header">
         <div class="header__warp">
           <span @click="back">
-            <router-link to="/home-page">☁️云纸条</router-link>
+            <router-link to="/index-page">☁️云纸条</router-link>
           </span>
           <span class="header__warp--living" v-if="true">房间正在直播中</span>
           <span class="header__warp--stopping" v-if="false">当前房间尚未直播...</span>
@@ -26,7 +26,11 @@
           </transition>
         </div>
       </header>
-      <section class="paint" id="paint">
+      <section class="paint" id="paint" @mousemove.stop.prevent="mouseFollow($event)" ref="paint">
+        <span class="paint__tools--cursor"
+              ref="cursor"
+              :class="{pencil:pencilShow,eraser:eraserShow}"
+        ></span>
         <div class="paint-board">
           <section>
             <div id="write" class="write" v-if="this.id==='owner'">
@@ -37,8 +41,36 @@
         </div>
         <aside class="paint__tool" v-if="this.id==='owner'">
           <ul>
-            <li><img src="./pencil.png"></li>
-            <li><img src="./eraser.png"></li>
+            <li @click="adjust($event,'pencil')">
+              <img src="./pencil.png">
+              <div class="slider__range--container pencil" :class="{active: pencilShow}">
+                <input class="slider__vertical" type="range" min="1" max="6" v-model="pencilSize"/>
+                <div class="colorpicker"></div>
+              </div>
+            </li>
+            <li @click="adjust($event,'eraser')">
+              <img src="./eraser.png">
+              <div class="slider__range--container eraser" :class="{active: eraserShow}">
+                <input class="slider__vertical" type="range" min="1" max="6" v-model="eraserSize"/>
+              </div>
+            </li>
+            <li @click="adjust($event,'circle')">
+              <img src="./circle.png">
+              <div class="slider__range--container" :class="{active: circleShow}">
+                <input class="slider__vertical" type="range" min="1" max="6" v-model="eraserSize"/>
+                <div class="colorpicker"></div>
+              </div>
+            </li>
+            <li @click="adjust($event,'rectangle')">
+              <img src="./rectangle.png">
+              <div class="slider__range--container" :class="{active: rectangleShow}">
+                <input class="slider__vertical" type="range" min="1" max="6" v-model="eraserSize"/>
+                <div class="colorpicker"></div>
+              </div>
+            </li>
+            <li>
+              <img src="./clean.png">
+            </li>
           </ul>
         </aside>
       </section>
@@ -61,17 +93,26 @@
         sendMessage: [],
         getMessage: [],
         socket: '',
-        reader: ''
+        reader: '',
+        pencilShow: false,
+        eraserShow: false,
+        circleShow: false,
+        rectangleShow: false,
+        paint: true,
+        widthDiff: '',
+        pencilSize: 5,
+        eraserSize: 5
       }
     },
     mounted () {
       this.$nextTick(() => {
-        this.copyBoard();
+        this.initCopyBoard();
         // 等待vuex数据更新
         let time = setInterval(() => {
           if (this.id !== '') {
             clearInterval(time);
             this.justify();
+            this.initColorBoard();
           }
         }, 200)
       })
@@ -85,6 +126,16 @@
       getMessage (newValue) {
         this.reader.message = newValue;
         this.reader.draw();
+      },
+      // 改变笔刷大小
+      pencilSize (newValue) {
+        this.$refs['cursor'].style.height = `${newValue}px`;
+        this.$refs['cursor'].style.width = `${newValue}px`;
+      },
+      // 改变橡皮大小
+      eraserSize (newValue) {
+        this.$refs['cursor'].style.height = `${newValue}px`;
+        this.$refs['cursor'].style.width = `${newValue}px`;
       }
     },
     computed: {
@@ -94,10 +145,63 @@
       })
     },
     methods: {
+      // 初始化画板
+      initColorBoard () {
+        for (let em of $('.colorpicker')) {
+          $(em).ClassyColor({
+            color: '#A98C61',
+            colorSpace: 'rgba',
+            labels: true,
+            staticComponents: true,
+            displayColor: 'css'
+          });
+        }
+      },
+      // 调整画笔和橡皮大小事件
+      adjust (event, name) {
+        switch (name) {
+          case 'pencil':
+            this.pencilShow = !this.pencilShow;
+            this.eraserShow = false;
+            this.circleShow = false;
+            this.rectangleShow = false;
+            break;
+          case 'eraser':
+            this.eraserShow = !this.eraserShow;
+            this.pencilShow = false;
+            this.circleShow = false;
+            this.rectangleShow = false;
+            break;
+          case 'circle':
+            this.circleShow = !this.circleShow;
+            this.pencilShow = false;
+            this.eraserShow = false;
+            this.rectangleShow = false;
+            break;
+          case 'rectangle' :
+            this.rectangleShow = !this.rectangleShow;
+            this.pencilShow = false;
+            this.eraserShow = false;
+            this.circleShow = false;
+            break;
+        }
+      },
+      // 鼠标跟随移动
+      mouseFollow (event) {
+        if (!this.widthDiff) {
+          this.widthDiff = (window.innerWidth - this.$refs['paint'].offsetWidth) /
+            2;
+        }
+        let topX = event.clientY - 70;
+        let leftX = event.clientX - this.widthDiff;
+        this.$refs['cursor'].style.top = `${topX}px`;
+        this.$refs['cursor'].style.left = `${leftX}px`;
+      },
       // 返回主页销毁房间
       back () {
         if (confirm('确定退出房间？')) {
-          let url = 'http://10.19.220.110:4000/token/destroy/' + this.token;
+          let url = 'http://localhost:4000/token/destroy/' + this.token;
+          // let url = 'http://10.19.220.110:4000/token/destroy/' + this.token;
           axios.get(url).then((res, req) => {
             res = res.data;
             console.log('房间已销毁');
@@ -110,6 +214,22 @@
         setTimeout(() => {
           this.tips = '点击复制令牌号';
         }, 500);
+      },
+      // 铅笔按钮打开与关闭
+      togglePencil () {
+        this.paint = true;
+        this.pencilShow = !this.pencilShow;
+        if (this.eraserShow) {
+          this.eraserShow = false;
+        }
+      },
+      // 橡皮按钮打开与关闭
+      toggleEraser () {
+        this.paint = false;
+        this.eraserShow = !this.eraserShow;
+        if (this.pencilShow) {
+          this.pencilShow = false;
+        }
       },
       // 分享界面关闭，监听空白区域
       shareHide (event) {
@@ -125,7 +245,7 @@
         }
       },
       // 挂载复制粘贴
-      copyBoard () {
+      initCopyBoard () {
         let copy = new Clipboard('#copy');
         copy.on('success', () => {
           this.tips = '复制成功，快去分享吧'
@@ -133,12 +253,12 @@
       },
       // 判断房主还是宾客
       justify () {
-        let url = 'http://10.19.220.110:4000/' + this.token;
+        // let url = 'http://10.19.220.110:4000/';
+        let url = 'http://localhost:4000';
         let socket = io.connect(url);
+        console.log('connect socket');
         this.socket = socket;
-        let height = document.getElementById('paint').offsetHeight - 27;
         if (this.id === 'owner') {
-//          let url = 'http://localhost:4000/' + this.token;
           let writter = new PaperWritter({
             'el': document.getElementById('write'),
             'height': 670,
@@ -370,5 +490,137 @@
         top: -8px
       100%
         top: 0px
-
+</style>
+<style lang="stylus" rel="stylesheet/stylus" scoped>
+  #room {
+    .paint {
+      .paint__tools--cursor {
+        transform: translate3d(-50%, -50%, 0);
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        &.pencil {
+          display: block;
+          width: 20px;
+          height: 20px;
+          box-shadow: 0 0 10px rgba(204, 204, 204, 0.5);
+          background: rgba(200, 200, 200, 0.4);
+          border-radius: 50%;
+        }
+        &.eraser {
+          display: block;
+          width: 35px;
+          height: 35px;
+          box-shadow: 0 0 10px rgba(204, 204, 204, 0.5);
+          background: rgba(200, 200, 200, 0.4);
+          border-radius: 5px 5px 15px 5px;
+          transform: translate3d(-50%, -50%, 0) rotate(40deg);
+        }
+      }
+      .paint__tool {
+        width: 50px;
+        background: white;
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        -webkit-box-shadow: 0 0 15px #ccc;
+        box-shadow: 0 0 15px #ccc;
+        opacity: .87;
+        border-radius: 10px;
+        ul {
+          list-style: none;
+        }
+        li {
+          position: relative;
+          &:not(:last-child) {
+            border-bottom: 1px solid rgba(204, 204, 204, 0.8);
+          }
+          &:hover {
+            cursor: pointer;
+            background: rgba(204, 204, 204, 0.2);
+            img {
+              animation-duration: 800ms;
+              animation-name: jump;
+              animation-timing-function: ease-in-out;
+              animation-delay: 0; // animation-iteration-count: infinite;
+            }
+          }
+          width: 50px;
+          height: 50px;
+          img {
+            width: 30px;
+            height: 30px;
+            margin: 10px;
+            position: relative;
+            top: 0px;
+          }
+          .slider__range--container {
+            position: absolute;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            top: 0px;
+            left: -45px;
+            height: 231px;
+            width: 30px; // background: #DABA8C;
+            display none
+            .colorpicker {
+              position: absolute;
+              width: 30px;
+              border-radius: 50%;
+              height: 30px;
+              background: rgba(169, 140, 97, 0.5);
+              right: -1px;
+              bottom: -7px;
+              box-shadow: 0 0 25px #ccc;
+              &.ClassyColor {
+                font-size: 4px !important;
+              }
+            }
+            &.active {
+              display: block;
+            }
+            &::after {
+              position: absolute;
+              z-index: -1;
+              right: -18px;
+              top: 15px;
+              content: '';
+              border: 10px solid #d4af7a;
+              border-color: transparent transparent transparent #d4af7a;
+            }
+            input[type=range] {
+              position: absolute;
+              left: -87px;
+              top: 82px;
+              transform: rotate(90deg);
+              -webkit-appearance: none;
+              width: 200px;
+            }
+            input[type=range]:focus {
+              outline: none;
+            }
+            input[type=range]::-webkit-slider-runnable-track {
+              width: 100%;
+              height: 30px;
+              cursor: pointer;
+              box-shadow: 0 0 25px #ccc;
+              background: #d4af7a;
+              border-radius: 15px;
+            }
+            input[type=range]::-webkit-slider-thumb {
+              box-shadow: 0px 0px 5px rgba(0, 0, 62, 0.67), 0px 0px 0px rgba(0, 0, 88, 0.67);
+              border: 1.2px solid rgba(204, 204, 204, 0.57);
+              height: 30px;
+              width: 30px;
+              border-radius: 15px;
+              background: rgba(255, 255, 255, 0.5);
+              cursor: pointer;
+              -webkit-appearance: none;
+            }
+          }
+        }
+      }
+    }
+  }
 </style>
