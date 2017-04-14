@@ -40,8 +40,8 @@
     methods: {
       join () {
         this.changeId('host');
-//        let url = 'http://localhost:4000/websocket/connect/' + this.inputToken;
-        let url = 'http://10.19.220.110:4000/websocket/connect/' + this.inputToken;
+        let url = 'http://localhost:4000/websocket/connect/' + this.inputToken;
+//        let url = 'http://10.19.220.110:4000/websocket/connect/' + this.inputToken;
         axios.get(url, {withCredentials: true}).then((res, req) => {
           res = res.data;
           if (res.errmsg === 'ok') {

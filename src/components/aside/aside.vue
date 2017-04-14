@@ -29,8 +29,8 @@
     methods: {
       create () {
         this.changeId('owner');
-//        let url = 'http://localhost:4000/token/create'
-        let url = 'http://10.19.220.110:4000/token/create';
+        let url = 'http://localhost:4000/token/create'
+//        let url = 'http://10.19.220.110:4000/token/create';
         axios.get(url, {withCredentials: true})
           .then((res, req) => {
             res = res.data;
